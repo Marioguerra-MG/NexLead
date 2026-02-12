@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexLead</title>
+    <link rel="stylesheet" href="app/css/index.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+</head>
+
+<body>
+
+    <header>
+        <div class="tituloRelatorio">
+            <h1 class="logo">
+                <img src="app/img/logo.svg" alt="Logo NexLead">
+                NexLead
+            </h1>
+
+            <a href="/app/html/metricas.html" style="color:#7c3aed;text-decoration:none;font-weight:600;">
+                Relatorio >
+            </a>
+        </div>
+
+
+        <div class="meta">
+            Meta: <span id="metaValor">20</span> |
+            Fechados: <span id="fechados">0</span>
+        </div>
+
+        <div class="progress-container">
+            <div id="progressBar"></div>
+        </div>
+    </header>
+
+    <section class="add-cliente">
+        <input type="text" id="nome" placeholder="Nome do cliente">
+        <input type="text" id="telefone" placeholder="Telefone (55999999999)">
+        <button onclick="adicionarCliente()">+ Adicionar</button>
+    </section>
+
+    <section class="funil">
+
+        <div class="coluna">
+            <h2 onclick="toggleColuna('Novo')">
+                <i data-lucide="user-plus"></i>
+                Novo (<span id="count-Novo">0</span>)
+            </h2>
+            <div class="lista" id="Novo"></div>
+        </div>
+
+        <div class="coluna">
+            <h2 onclick="toggleColuna('Conversa')">
+                <i data-lucide="message-circle"></i>
+                Conversando (<span id="count-Conversa">0</span>)
+            </h2>
+
+            <div class="lista" id="Conversa"></div>
+        </div>
+
+        <div class="coluna">
+            <h2 onclick="toggleColuna('Fechado')">
+                <i data-lucide="check-circle"></i>
+                Fechado (<span id="count-Fechado">0</span>)
+            </h2>
+
+            <div class="lista" id="Fechado"></div>
+        </div>
+
+        <div class="coluna">
+            <h2 onclick="toggleColuna('Perdido')">
+                <i data-lucide="x-circle"></i>
+                Perdido (<span id="count-Perdido">0</span>)
+            </h2>
+
+            <div class="lista" id="Perdido"></div>
+        </div>
+
+    </section>
+    <!--
+<section class="backup">
+  <button onclick="exportarDados()">Exportar Backup</button>
+  <input type="file" onchange="importarDados(event)">
+</section>
+-->
+
+    <script src="app/js/index.js" defer></script>
+
+    <script>
+        lucide.createIcons();
+    </script>
+
+
+</body>
+
+</html>

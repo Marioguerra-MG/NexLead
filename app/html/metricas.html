@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexLead</title>
+  <link rel="stylesheet" href="/app/css/index.css">
+</head>
+
+<body>
+
+<header>
+  <h1>📊 Dashboard de Métricas</h1>
+  <div class="meta">
+    <a href="/index.html" style="color:#7c3aed;text-decoration:none;font-weight:600;">
+      ← INICIO
+    </a>
+  </div>
+</header>
+
+<section class="dashboard-page">
+
+  <div class="metric big">
+    <h3>Total de Clientes</h3>
+    <span id="totalClientes">0</span>
+  </div>
+
+  <div class="metric">
+    <h3>Novos</h3>
+    <span id="metricNovo">0</span>
+  </div>
+
+  <div class="metric">
+    <h3>Conversando</h3>
+    <span id="metricConversa">0</span>
+  </div>
+
+  <div class="metric">
+    <h3>Fechados</h3>
+    <span id="metricFechado">0</span>
+  </div>
+
+  <div class="metric">
+    <h3>Perdidos</h3>
+    <span id="metricPerdido">0</span>
+  </div>
+
+  <div class="metric highlight">
+    <h3>Taxa de Conversão</h3>
+    <span id="taxaConversao">0%</span>
+  </div>
+
+  <div class="metric big highlight">
+    <h3>Progresso da Meta</h3>
+    <span id="metaPercent">0%</span>
+  </div>
+
+</section>
+
+<script>
+const clientes = JSON.parse(localStorage.getItem("flowzap_clientes")) || [];
+const meta = 20;
+
+function carregarMetricas() {
+
+  const total = clientes.length;
+  const novos = clientes.filter(c => c.status === "Novo").length;
+  const conversa = clientes.filter(c => c.status === "Conversa").length;
+  const fechados = clientes.filter(c => c.status === "Fechado").length;
+  const perdidos = clientes.filter(c => c.status === "Perdido").length;
+
+  document.getElementById("totalClientes").innerText = total;
+  document.getElementById("metricNovo").innerText = novos;
+  document.getElementById("metricConversa").innerText = conversa;
+  document.getElementById("metricFechado").innerText = fechados;
+  document.getElementById("metricPerdido").innerText = perdidos;
+
+  const conversao = total > 0 ? ((fechados / total) * 100).toFixed(1) : 0;
+  document.getElementById("taxaConversao").innerText = conversao + "%";
+
+  const progresso = ((fechados / meta) * 100).toFixed(1);
+  document.getElementById("metaPercent").innerText = progresso + "%";
+}
+
+carregarMetricas();
+</script>
+
+</body>
+</html>
