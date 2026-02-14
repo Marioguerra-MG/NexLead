@@ -219,9 +219,9 @@ function abrirModalPagamento() {
       <div class="pix-box">
         <p><strong>Chave PIX:</strong></p>
         <input id="pixKey" value="nexleadnexlead@gmail.com" readonly>
-        <button onclick="copiarPix()">Copiar</button>
+        <button onclick="copiarPix()">Copiar Chave pix</button>
 
-        <button class="btn-secondary" onclick="abrirWhatsSuporte()">Enviar Comprovante</button>
+        <button class="btn-secondary" onclick="abrirWhatsSuporte()">Enviar Comprovante Pix</button>
       </div>
 
       <p class="device-id">Seu Device ID:</p>
