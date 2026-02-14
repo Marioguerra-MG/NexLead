@@ -1,9 +1,50 @@
 let clientes = JSON.parse(localStorage.getItem("flowzap_clientes")) || [];
 let meta = 20;
 
+/* ================= SISTEMA DE PLANO ================= */
+
+const LIMITE_FREE = 5;
+let plano = localStorage.getItem("flowzap_plano") || "free";
+
+/* ===== GERAR ID ÚNICO DO DISPOSITIVO ===== */
+
+function gerarDeviceId() {
+  let id = localStorage.getItem("nexlead_device");
+
+  if (!id) {
+    id = "DEV-" + Math.random().toString(36).substring(2, 12);
+    localStorage.setItem("nexlead_device", id);
+  }
+
+  return id;
+}
+
+const deviceId = gerarDeviceId();
+
+/* ===== GERAR CÓDIGO BASEADO NO DEVICE ===== */
+
+function gerarCodigoValido() {
+  const segredo = "NEXLEAD2026";
+  return btoa(deviceId + segredo).substring(0, 20);
+}
+
 /* ================= SALVAR ================= */
+
 function salvar() {
   localStorage.setItem("flowzap_clientes", JSON.stringify(clientes));
+}
+
+/* ================= VERIFICAR LIMITE ================= */
+
+function verificarLimite() {
+  if (plano === "premium") return true;
+
+  if (clientes.length >= LIMITE_FREE) {
+    abrirModalPagamento();
+    return false;
+  }
+
+  return true;
 }
 
 /* ================= FORMATADORES ================= */
@@ -20,11 +61,7 @@ function limparNumero(numero) {
 
 function formatarTelefone(numero) {
   numero = limparNumero(numero);
-
-  if (!numero.startsWith("55")) {
-    numero = "55" + numero;
-  }
-
+  if (!numero.startsWith("55")) numero = "55" + numero;
   return numero;
 }
 
@@ -48,11 +85,10 @@ function numeroDuplicado(numero) {
   return clientes.some(c => c.telefone === numero);
 }
 
-/* ================= MÁSCARA AUTOMÁTICA ================= */
+/* ================= MÁSCARA TELEFONE ================= */
 
 document.getElementById("telefone").addEventListener("input", function(e) {
   let numero = limparNumero(e.target.value);
-
   if (numero.length > 11) numero = numero.slice(0, 11);
 
   if (numero.length > 6) {
@@ -67,21 +103,23 @@ document.getElementById("telefone").addEventListener("input", function(e) {
 /* ================= ADICIONAR ================= */
 
 function adicionarCliente() {
+  if (!verificarLimite()) return;
+
   let nome = document.getElementById("nome").value.trim();
   let telefoneInput = document.getElementById("telefone").value.trim();
 
   if (!nome || !telefoneInput) {
-    alert("Preencha tudo!");
+    mostrarToast("Preencha todos os campos");
     return;
   }
 
   if (!numeroValido(telefoneInput)) {
-    alert("Número inválido! Use DDD + número.");
+    mostrarToast("Número inválido");
     return;
   }
 
   if (numeroDuplicado(telefoneInput)) {
-    alert("Esse número já foi cadastrado!");
+    mostrarToast("Número já cadastrado");
     return;
   }
 
@@ -105,6 +143,7 @@ function adicionarCliente() {
 /* ================= RENDER ================= */
 
 function renderizar() {
+
   const colunas = ["Novo", "Conversa", "Fechado", "Perdido"];
 
   colunas.forEach(status => {
@@ -116,45 +155,25 @@ function renderizar() {
   });
 
   clientes.forEach(cliente => {
+
     const card = document.createElement("div");
     card.className = "card";
 
     card.innerHTML = `
       <strong>${cliente.nome}</strong>
       <small>${formatarExibicao(cliente.telefone)}</small>
-      <br>
-      <button onclick="abrirWhats('${cliente.telefone}')" class="btn-whats">
-        🟢 WhatsApp
-      </button>
-      <button onclick="mover(${cliente.id})">Mover</button>
-      <button onclick="excluir(${cliente.id})">X</button>
+      <div class="card-buttons">
+        <button onclick="abrirWhats('${cliente.telefone}')">WhatsApp</button>
+        <button onclick="mover(${cliente.id})">Mover</button>
+        <button onclick="excluir(${cliente.id})">Excluir</button>
+      </div>
     `;
 
     document.getElementById(cliente.status).appendChild(card);
   });
 
   atualizarMeta();
-}
-
-/* ================= MOVER ================= */
-
-function mover(id) {
-  const ordem = ["Novo", "Conversa", "Fechado", "Perdido"];
-  const cliente = clientes.find(c => c.id === id);
-
-  let index = ordem.indexOf(cliente.status);
-  cliente.status = ordem[(index + 1) % ordem.length];
-
-  salvar();
-  renderizar();
-}
-
-/* ================= EXCLUIR ================= */
-
-function excluir(id) {
-  clientes = clientes.filter(c => c.id !== id);
-  salvar();
-  renderizar();
+  mostrarPlano();
 }
 
 /* ================= WHATS ================= */
@@ -173,44 +192,106 @@ function atualizarMeta() {
   document.getElementById("progressBar").style.width = porcentagem + "%";
 }
 
-/* ================= COLUNAS RECOLHÍVEIS ================= */
+/* ================= MOSTRAR PLANO ================= */
 
-function toggleColuna(status) {
-  const colunas = ["Novo", "Conversa", "Fechado", "Perdido"];
+function mostrarPlano() {
+  const el = document.getElementById("planoAtual");
+  if (!el) return;
 
-  colunas.forEach(nome => {
-    const lista = document.getElementById(nome);
-
-    if (nome === status) {
-      lista.style.display =
-        lista.style.display === "none" ? "block" : "none";
-    } else {
-      lista.style.display = "none";
-    }
-  });
+  el.innerText = plano === "premium"
+    ? "Premium 🚀"
+    : "Free (5 contatos)";
 }
 
-/* ================= BACKUP ================= */
+/* ================= MODAL PAGAMENTO ================= */
 
-function exportarDados() {
-  const blob = new Blob([JSON.stringify(clientes)], { type: "application/json" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "flowzap-backup.json";
-  link.click();
+function abrirModalPagamento() {
+
+  const modal = document.createElement("div");
+  modal.id = "modalPagamento";
+
+  modal.innerHTML = `
+    <div class="modal-box">
+      <h2>Desbloqueie o Premium 🚀</h2>
+      <p>Contatos ilimitados + acesso vitalício</p>
+      <h3>R$ 29,99 pagamento único</h3>
+
+      <div class="pix-box">
+        <p><strong>Chave PIX:</strong></p>
+        <input id="pixKey" value="nexleadnexlead@gmail.com" readonly>
+        <button onclick="copiarPix()">Copiar</button>
+
+        <button class="btn-secondary" onclick="abrirWhatsSuporte()">Enviar Comprovante</button>
+      </div>
+
+      <p class="device-id">Seu Device ID:</p>
+      <small>${deviceId}</small>
+
+      <input id="codigoPremium" placeholder="Digite seu código de ativação">
+
+      <button class="btn-primary" onclick="ativarPremium()">Ativar Premium</button>
+      
+      <button class="btn-close" onclick="fecharModal()">Fechar</button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
 }
 
-function importarDados(event) {
-  const file = event.target.files[0];
-  const reader = new FileReader();
+function fecharModal() {
+  document.getElementById("modalPagamento")?.remove();
+}
 
-  reader.onload = function(e) {
-    clientes = JSON.parse(e.target.result);
-    salvar();
+/* ================= PIX ================= */
+
+function copiarPix() {
+  const pix = document.getElementById("pixKey");
+  pix.select();
+  document.execCommand("copy");
+  mostrarToast("Chave PIX copiada!");
+}
+
+function abrirWhatsSuporte() {
+  const mensagem = encodeURIComponent(
+    `Olá, fiz o pagamento do Premium.\nMeu Device ID: ${deviceId}`
+  );
+  window.open(`https://wa.me/5561998814365?text=${mensagem}`, "_blank");
+}
+
+/* ================= ATIVAÇÃO ================= */
+
+function ativarPremium() {
+
+  const codigoDigitado = document.getElementById("codigoPremium").value.trim();
+  const codigoCorreto = gerarCodigoValido();
+
+  if (codigoDigitado === codigoCorreto) {
+
+    plano = "premium";
+    localStorage.setItem("flowzap_plano", "premium");
+
+    fecharModal();
+    mostrarToast("Premium ativado com sucesso 🚀");
     renderizar();
-  };
 
-  reader.readAsText(file);
+  } else {
+    mostrarToast("Código inválido");
+  }
+}
+
+/* ================= TOAST ================= */
+
+function mostrarToast(mensagem) {
+
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.innerText = mensagem;
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
 }
 
 /* ================= INICIAR ================= */
